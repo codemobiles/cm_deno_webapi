@@ -24,7 +24,7 @@ let products: Array<Product> = [
     }
 ]
 
-let number = products.length;
+let count = products.length;
 
 function notFound(response: any, message: string) {
     response.status = Status.NotFound;
@@ -61,6 +61,19 @@ router
             }
             response.body = product;
         }
+    })
+    .post("/product", async ({ response, request }: { response: any; request: any }) => {
+        if(!request.hasBody){
+            badRequest(response);
+            return;
+        }
+        const product : {name: string, price: number, stock: number} = await request.body().value;
+        count += 1;
+        products.push({
+            id: count,
+            ...product
+        })
+        response.body = { message : "Add Product Successfully fsafs"};
     })
 
 
