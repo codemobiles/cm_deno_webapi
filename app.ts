@@ -1,4 +1,4 @@
-import { Application, Router } from "https://deno.land/x/oak/mod.ts";
+import { Application, Router, Status } from "https://deno.land/x/oak/mod.ts";
 import { bold, green } from "https://deno.land/std@0.63.0/fmt/colors.ts";
 import Product from "./models/product.ts";
 
@@ -26,32 +26,40 @@ let products: Array<Product> = [
 
 let number = products.length;
 
+function notFound(response: any, message: string) {
+    response.status = Status.NotFound;
+    response.body = { message };
+}
+
+function badRequest(response: any) {
+    response.status = Status.BadRequest;
+    response.body = { message: "Invalid request" };
+}
+
 router
-    .get("/product", (context) => {
-        context.response.body = products;
+    .get("/product", ({ response }: { response: any; }) => {
+        response.body = products;
     })
-    .get("/product/price", (context) => {
-        const min = context.request.url.searchParams.get("min");
-        const max = context.request.url.searchParams.get("max");
+    .get("/product/price", ({ response, request }: { response: any; request: any }) => {
+        const min = request.url.searchParams.get("min");
+        const max = request.url.searchParams.get("max");
 
         if (!min || !max) {
-            context.response.body = { message: "Invalid request" };
-            context.response.status = 400;
+            badRequest(response);
             return;
         }
 
         const productList = products.filter((product) => product.price >= Number(min) && product.price <= Number(max));
-        context.response.body = productList;
+        response.body = productList;
     })
-    .get("/product/:id", (context) => {
-        if (context.params && context.params.id) {
-            const product: Product | undefined = products.find((product) => product.id == context.params.id);
+    .get("/product/:id", ({ response, params }: { response: any; params: { id: string } }) => {
+        if (params && params.id) {
+            const product: Product | undefined = products.find((product) => product.id?.toString() == params.id);
             if (!product) {
-                context.response.body = { message: `product id: ${context.params.id} not found` };
-                context.response.status = 404
+                notFound(response, `product id: ${params.id} not found`);
                 return;
             }
-            context.response.body = product;
+            response.body = product;
         }
     })
 
