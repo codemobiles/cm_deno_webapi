@@ -1,22 +1,5 @@
-import Product from "../models/product.ts";
+import productService from "../services/product.ts";
 import { Status } from "https://deno.land/x/oak/mod.ts";
-
-let products: Array<Product> = [
-    {
-        id: 1,
-        name: "macbook pro",
-        price: 120000,
-        stock: 5,
-    },
-    {
-        id: 2,
-        name: "iPhone XR",
-        price: 40000,
-        stock: 1,
-    }
-]
-
-let count = products.length;
 
 function notFound(response: any, message: string) {
     response.status = Status.NotFound;
@@ -29,12 +12,12 @@ function badRequest(response: any) {
 }
 
 const getProducts = ({ response }: { response: any; }) => {
-    response.body = products;
+    response.body = productService.getProductAll;
 };
 
 const getProduct = ({ response, params }: { response: any; params: { id: string } }) => {
     if (params && params.id) {
-        const product: Product | undefined = products.find((product) => product.id?.toString() == params.id);
+        const product = productService.getProductById(params.id);
         if (!product) {
             notFound(response, `product id: ${params.id} not found`);
             return;
@@ -52,8 +35,7 @@ const getProductByPriceRange = ({ response, request }: { response: any; request:
         return;
     }
 
-    const productList = products.filter((product) => product.price >= Number(min) && product.price <= Number(max));
-    response.body = productList;
+    response.body = productService.getProductByPriceRange(min, max);
 }
 
 const addProduct = async ({ response, request }: { response: any; request: any }) => {
@@ -62,11 +44,8 @@ const addProduct = async ({ response, request }: { response: any; request: any }
         return;
     }
     const product: { name: string, price: number, stock: number } = await request.body().value;
-    count += 1;
-    products.push({
-        id: count,
-        ...product
-    })
+    productService.addProduct(product);
+    response.status = Status.Created;
     response.body = { message: "Add Product Successfully" };
 };
 
@@ -77,12 +56,8 @@ const updateProduct = async ({ response, request, params }: { response: any; req
     }
 
     if (params && params.id) {
-        const index = products.findIndex((product) => product.id?.toString() == params.id);
-        if (index !== -1) {
-            const product: { name: string, price: number, stock: number } = await request.body().value;
-            products[index].name = product.name;
-            products[index].price = product.price;
-            products[index].stock = product.stock;
+        const product: { name: string, price: number, stock: number } = await request.body().value;
+        if (productService.updateProduct(params.id, product)) {
             response.body = { message: 'Update Product Successfully' };
             return;
         }
@@ -92,9 +67,7 @@ const updateProduct = async ({ response, request, params }: { response: any; req
 
 const deleteProduct = ({ response, params }: { response: any; params: { id: string } }) => {
     if (params && params.id) {
-        const index = products.findIndex((product) => product.id?.toString() == params.id);
-        if (index !== -1) {
-            products.splice(index, 1);
+        if (productService.deleteProduct(params.id)) {
             response.status = Status.NoContent;
             response.body = { message: 'Delete Product Successfully' };
             return;
