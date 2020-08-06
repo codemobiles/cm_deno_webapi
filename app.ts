@@ -63,17 +63,36 @@ router
         }
     })
     .post("/product", async ({ response, request }: { response: any; request: any }) => {
-        if(!request.hasBody){
+        if (!request.hasBody) {
             badRequest(response);
             return;
         }
-        const product : {name: string, price: number, stock: number} = await request.body().value;
+        const product: { name: string, price: number, stock: number } = await request.body().value;
         count += 1;
         products.push({
             id: count,
             ...product
         })
-        response.body = { message : "Add Product Successfully fsafs"};
+        response.body = { message: "Add Product Successfully" };
+    })
+    .put("/product/:id", async ({ response, request, params }: { response: any; request: any; params: { id: string } }) => {
+        if (!request.hasBody) {
+            badRequest(response);
+            return;
+        }
+
+        if (params && params.id) {
+            const index = products.findIndex((product) => product.id?.toString() == params.id);
+            if (index !== -1) {
+                const product: { name: string, price: number, stock: number } = await request.body().value;
+                products[index].name = product.name;
+                products[index].price = product.price;
+                products[index].stock = product.stock;
+                response.body = { message : 'Update Product Successfully'};
+                return;
+            }
+            notFound(response, `product id: ${params.id} not found`);
+        }
     })
 
 
