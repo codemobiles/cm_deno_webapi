@@ -29,7 +29,21 @@ let number = products.length;
 router
     .get("/product", (context) => {
         context.response.body = products;
-    }).get("/product/:id", (context) => {
+    })
+    .get("/product/price", (context) => {
+        const min = context.request.url.searchParams.get("min");
+        const max = context.request.url.searchParams.get("max");
+
+        if (!min || !max) {
+            context.response.body = { message: "Invalid request" };
+            context.response.status = 400;
+            return;
+        }
+
+        const productList = products.filter((product) => product.price >= Number(min) && product.price <= Number(max));
+        context.response.body = productList;
+    })
+    .get("/product/:id", (context) => {
         if (context.params && context.params.id) {
             const product: Product | undefined = products.find((product) => product.id == context.params.id);
             if (!product) {
@@ -40,7 +54,8 @@ router
             context.response.body = product;
         }
     })
-    
+
+
 app.use(router.routes());
 
 app.addEventListener("listen", ({ secure, hostname, port }) => {
