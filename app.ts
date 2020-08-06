@@ -88,7 +88,19 @@ router
                 products[index].name = product.name;
                 products[index].price = product.price;
                 products[index].stock = product.stock;
-                response.body = { message : 'Update Product Successfully'};
+                response.body = { message: 'Update Product Successfully' };
+                return;
+            }
+            notFound(response, `product id: ${params.id} not found`);
+        }
+    })
+    .delete("/product/:id", async ({ response, params }: { response: any; params: { id: string } }) => {
+        if (params && params.id) {
+            const index = products.findIndex((product) => product.id?.toString() == params.id);
+            if (index !== -1) {
+                products.splice(index, 1);
+                response.status = Status.NoContent;
+                response.body = { message: 'Delete Product Successfully' };
                 return;
             }
             notFound(response, `product id: ${params.id} not found`);
